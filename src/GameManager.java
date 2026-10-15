@@ -5,8 +5,8 @@ import java.util.Random;
 import java.util.Scanner;
 
 public final class GameManager {
-    private static final int FLOORS = 5;
-    private static final int REST_HEAL = 10;
+    static final int FLOORS = 5;
+    static final int REST_HEAL = 10;
     private static final double WAKE_CHANCE = 0.35;
     private static final String[] MONSTERS = {"Goblin", "Skeleton", "Orc", "Troll", "Wraith", "Ogre"};
     private static final String[] TREASURES = {"Coin pouch", "Silver chalice", "Gem", "Gold idol", "Old crown"};
@@ -29,6 +29,15 @@ public final class GameManager {
     }
 
     public Room getRoot() { return root; }
+
+    public Player getPlayer() { return player; }
+
+    // returns everything said since the last call and clears it
+    public String takeLog() {
+        String text = log.toString().trim();
+        log.setLength(0);
+        return text;
+    }
 
     public void run() {
         double total = root.getTreasureValue();
@@ -106,28 +115,33 @@ public final class GameManager {
                 explore((Room) target);
                 continue;
             }
-            if (target.countMonsters() == 0 && target.getTreasureValue() == 0) {
-                say("Nothing left there.");
-                continue;
-            }
-
-            int damage = target.threat();
-            double factor = player.getGoldFactor();
-            double gain = target.collect(player) * factor;
-            player.hurt(damage);
-            player.earn(gain);
-            if (gain == 0 && damage == 0) {
-                say("It will not budge. Defeat the boss first.");
-            } else {
-                say("+" + (int) gain + " gold" + (damage > 0 ? ", -" + damage + " HP" : ""));
-            }
-            if (factor == 1 && player.isCursed()) {
-                say("You are CURSED: all gold from now on is halved.");
-            }
-
-            strikeBack(items);
-            makeNoise(items);
+            interact(target, items);
         }
+    }
+
+    // fight or loot one element of a room, then let the room react
+    public void interact(DungeonElement target, List<DungeonElement> items) {
+        if (target.countMonsters() == 0 && target.getTreasureValue() == 0) {
+            say("Nothing left there.");
+            return;
+        }
+
+        int damage = target.threat();
+        double factor = player.getGoldFactor();
+        double gain = target.collect(player) * factor;
+        player.hurt(damage);
+        player.earn(gain);
+        if (gain == 0 && damage == 0) {
+            say("It will not budge. Defeat the boss first.");
+        } else {
+            say("+" + (int) gain + " gold" + (damage > 0 ? ", -" + damage + " HP" : ""));
+        }
+        if (factor == 1 && player.isCursed()) {
+            say("You are CURSED: all gold from now on is halved.");
+        }
+
+        strikeBack(items);
+        makeNoise(items);
     }
 
     private void strikeBack(List<DungeonElement> items) {

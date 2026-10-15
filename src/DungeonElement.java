@@ -7,10 +7,8 @@ public interface DungeonElement {
 
     double getTreasureValue();
 
-    // damage dealt to whoever touches this element right now
     int threat();
 
-    // takes the money out of the element and returns it
     double collect(Player player);
 
     void wakeUp();
